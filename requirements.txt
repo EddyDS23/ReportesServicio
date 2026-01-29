@@ -1,0 +1,9 @@
+charset-normalizer==3.4.4
+pillow==12.1.0
+PySide6==6.10.1
+PySide6_Addons==6.10.1
+PySide6_Essentials==6.10.1
+python-dateutil==2.9.0.post0
+reportlab==4.4.9
+shiboken6==6.10.1
+six==1.17.0
