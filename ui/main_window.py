@@ -54,8 +54,10 @@ class ActivityListItem(QWidget):
                     color: {AppStyles.COLORS['text_primary']};
                 }}
             """)
+            self.title_label.setMinimumHeight(30)
         
         if self.duration_badge:
+            self.duration_badge.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
             self.duration_badge.setStyleSheet(f"""
                 QLabel {{
                     background-color: {AppStyles.COLORS['primary_light']};
@@ -66,6 +68,12 @@ class ActivityListItem(QWidget):
                     font-weight: 600;
                 }}
             """)
+            self.duration_badge.setMinimumWidth(80)
+            self.duration_badge.setMaximumWidth(100)
+            self.duration_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.duration_badge.setFixedHeight(25)
+            # Forzar actualización de geometría
+            self.duration_badge.updateGeometry()
     
     def setup_ui(self):
         """Setup the list item UI."""
@@ -89,7 +97,7 @@ class ActivityListItem(QWidget):
         
         # Left side - Activity info
         info_layout = QVBoxLayout()
-        info_layout.setSpacing(10)
+        info_layout.setSpacing(23)
         
         # Title and duration row
         title_row = QHBoxLayout()
@@ -105,13 +113,12 @@ class ActivityListItem(QWidget):
             }}
         """)
         self.title_label.setWordWrap(False)
+        self.title_label.setMinimumHeight(30)  # Asegurar altura suficiente
         title_row.addWidget(self.title_label)
         
-        # Spacer to push duration to the right
-        title_row.addStretch()
-        
-        # Duration badge
+        # Duration badge (sin stretch, pegado al título)
         self.duration_badge = QLabel(self.activity.duration)
+        self.duration_badge.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)  # Mantener estilos
         self.duration_badge.setStyleSheet(f"""
             QLabel {{
                 background-color: {AppStyles.COLORS['primary_light']};
@@ -122,8 +129,14 @@ class ActivityListItem(QWidget):
                 font-weight: 600;
             }}
         """)
-        self.duration_badge.setMinimumWidth(70)
+        self.duration_badge.setMinimumWidth(80)
+        self.duration_badge.setMaximumWidth(100)
+        self.duration_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.duration_badge.setFixedHeight(25)  # Altura fija para evitar cambios
         title_row.addWidget(self.duration_badge)
+        
+        # Stretch después del badge (empuja todo a la izquierda)
+        title_row.addStretch()
         
         info_layout.addLayout(title_row)
         
@@ -145,7 +158,7 @@ class ActivityListItem(QWidget):
         
         # Metadata row (time and images)
         meta_layout = QHBoxLayout()
-        meta_layout.setSpacing(16)
+        meta_layout.setSpacing(2)
         
         # Time range
         time_label = QLabel(f"⏰ {self.activity.start_time} - {self.activity.end_time}")
@@ -177,7 +190,7 @@ class ActivityListItem(QWidget):
         actions_layout = QHBoxLayout()
         actions_layout.setSpacing(10)
         
-        edit_btn = QPushButton("✏️ Edit")
+        edit_btn = QPushButton("✏️ Editar")
         edit_btn.setProperty("variant", "secondary")
         edit_btn.setMinimumWidth(100)
         edit_btn.setMinimumHeight(40)
@@ -185,7 +198,7 @@ class ActivityListItem(QWidget):
         edit_btn.clicked.connect(lambda: self.edit_requested.emit(self.index))
         actions_layout.addWidget(edit_btn)
         
-        delete_btn = QPushButton("🗑️ Delete")
+        delete_btn = QPushButton("🗑️ Eliminar")
         delete_btn.setProperty("variant", "danger")
         delete_btn.setMinimumWidth(100)
         delete_btn.setMinimumHeight(40)
@@ -216,7 +229,7 @@ class MainWindow(QMainWindow):
     
     def setup_ui(self):
         """Setup the main window UI."""
-        self.setWindowTitle("Daily Report System")
+        self.setWindowTitle("Sistema de Reportes Diarios")
         self.setMinimumSize(1000, 700)
         
         # Central widget
@@ -237,22 +250,22 @@ class MainWindow(QMainWindow):
         
         header_layout.addStretch()
         
-        new_btn = QPushButton("🆕 New Report")
+        new_btn = QPushButton("🆕 Nuevo Reporte")
         new_btn.setProperty("variant", "secondary")
         new_btn.clicked.connect(self.new_report)
         header_layout.addWidget(new_btn)
         
-        load_btn = QPushButton("📂 Load")
+        load_btn = QPushButton("📂 Cargar")
         load_btn.setProperty("variant", "secondary")
         load_btn.clicked.connect(self.load_report)
         header_layout.addWidget(load_btn)
         
-        save_btn = QPushButton("💾 Save")
+        save_btn = QPushButton("💾 Guardar")
         save_btn.setProperty("variant", "secondary")
         save_btn.clicked.connect(self.save_report)
         header_layout.addWidget(save_btn)
         
-        save_as_btn = QPushButton("💾 Save As...")
+        save_as_btn = QPushButton("💾 Guardar Como...")
         save_as_btn.setProperty("variant", "secondary")
         save_as_btn.clicked.connect(self.save_report_as)
         header_layout.addWidget(save_as_btn)
@@ -270,7 +283,7 @@ class MainWindow(QMainWindow):
         content_layout.setSpacing(20)
         
         # General Information Group
-        general_group = QGroupBox("General Information")
+        general_group = QGroupBox("Información General")
         general_layout = QVBoxLayout(general_group)
         general_layout.setSpacing(16)
         
@@ -284,7 +297,7 @@ class MainWindow(QMainWindow):
         responsible_layout.setContentsMargins(0, 0, 0, 0)
         responsible_layout.setSpacing(8)
         
-        responsible_label = QLabel("Responsible *")
+        responsible_label = QLabel("Responsable *")
         responsible_label.setProperty("subheading", True)
         responsible_layout.addWidget(responsible_label)
         
@@ -301,7 +314,7 @@ class MainWindow(QMainWindow):
         student_layout.setContentsMargins(0, 0, 0, 0)
         student_layout.setSpacing(8)
         
-        student_label = QLabel("Student *")
+        student_label = QLabel("Estudiante *")
         student_label.setProperty("subheading", True)
         student_layout.addWidget(student_label)
         
@@ -324,7 +337,7 @@ class MainWindow(QMainWindow):
         date_layout.setContentsMargins(0, 0, 0, 0)
         date_layout.setSpacing(8)
         
-        date_label = QLabel("Date *")
+        date_label = QLabel("Fecha *")
         date_label.setProperty("subheading", True)
         date_layout.addWidget(date_label)
         
@@ -343,7 +356,7 @@ class MainWindow(QMainWindow):
         entry_layout.setContentsMargins(0, 0, 0, 0)
         entry_layout.setSpacing(8)
         
-        entry_label = QLabel("Entry Time *")
+        entry_label = QLabel("Hora de Entrada *")
         entry_label.setProperty("subheading", True)
         entry_layout.addWidget(entry_label)
         
@@ -361,7 +374,7 @@ class MainWindow(QMainWindow):
         exit_layout.setContentsMargins(0, 0, 0, 0)
         exit_layout.setSpacing(8)
         
-        exit_label = QLabel("Exit Time *")
+        exit_label = QLabel("Hora de Salida *")
         exit_label.setProperty("subheading", True)
         exit_layout.addWidget(exit_label)
         
@@ -379,7 +392,7 @@ class MainWindow(QMainWindow):
         instance_layout.setContentsMargins(0, 0, 0, 0)
         instance_layout.setSpacing(8)
         
-        instance_label = QLabel("Instance Hours")
+        instance_label = QLabel("Horas de Instancia")
         instance_label.setProperty("subheading", True)
         instance_layout.addWidget(instance_label)
         
@@ -403,7 +416,7 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(general_group)
         
         # Activities Section
-        activities_group = QGroupBox("Activities")
+        activities_group = QGroupBox("Actividades")
         activities_layout = QVBoxLayout(activities_group)
         activities_layout.setSpacing(12)
         
@@ -420,7 +433,7 @@ class MainWindow(QMainWindow):
         
         activities_header.addStretch()
         
-        add_activity_btn = QPushButton("+ Add Activity")
+        add_activity_btn = QPushButton("+ Agregar Actividad")
         add_activity_btn.setProperty("variant", "success")
         add_activity_btn.clicked.connect(self.add_activity)
         activities_header.addWidget(add_activity_btn)
@@ -436,11 +449,11 @@ class MainWindow(QMainWindow):
         summary_layout = QHBoxLayout()
         summary_layout.setSpacing(16)
         
-        self.total_time_label = QLabel("Total Activity Time: 00:00")
+        self.total_time_label = QLabel("Tiempo Total de Actividades: 00:00")
         self.total_time_label.setProperty("caption", True)
         summary_layout.addWidget(self.total_time_label)
         
-        self.total_images_label = QLabel("Total Images: 0")
+        self.total_images_label = QLabel("Total de Imágenes: 0")
         self.total_images_label.setProperty("caption", True)
         summary_layout.addWidget(self.total_images_label)
         
@@ -458,35 +471,35 @@ class MainWindow(QMainWindow):
         bottom_layout.setSpacing(12)
         
         # Compression level
-        compression_label = QLabel("PDF Compression:")
+        compression_label = QLabel("Compresión de PDF:")
         bottom_layout.addWidget(compression_label)
         
         self.compression_combo = QComboBox()
-        self.compression_combo.addItems(["Low", "Medium", "High"])
+        self.compression_combo.addItems(["Bajo", "Medio", "Alto"])
         self.compression_combo.setCurrentIndex(1)
         self.compression_combo.setFixedWidth(150)
         bottom_layout.addWidget(self.compression_combo)
         
         # Signature checkbox
         from PySide6.QtWidgets import QCheckBox
-        self.signatures_checkbox = QCheckBox("Include Signatures")
+        self.signatures_checkbox = QCheckBox("Incluir Firmas")
         self.signatures_checkbox.setChecked(False)
         bottom_layout.addWidget(self.signatures_checkbox)
         
         # Theme toggle button
-        self.theme_btn = QPushButton("🌙 Dark Mode")
+        self.theme_btn = QPushButton("🌙 Modo Oscuro")
         self.theme_btn.setProperty("variant", "secondary")
         self.theme_btn.clicked.connect(self.toggle_theme)
         bottom_layout.addWidget(self.theme_btn)
         
         bottom_layout.addStretch()
         
-        preview_btn = QPushButton("👁️ Preview PDF")
+        preview_btn = QPushButton("👁️ Previsualizar PDF")
         preview_btn.setProperty("variant", "secondary")
         preview_btn.clicked.connect(self.preview_pdf)
         bottom_layout.addWidget(preview_btn)
         
-        generate_btn = QPushButton("📄 Generate PDF")
+        generate_btn = QPushButton("📄 Generar PDF")
         generate_btn.clicked.connect(self.generate_pdf)
         bottom_layout.addWidget(generate_btn)
         
@@ -517,9 +530,9 @@ class MainWindow(QMainWindow):
         
         # Update button text
         if AppStyles.CURRENT_THEME == "dark":
-            self.theme_btn.setText("☀️ Light Mode")
+            self.theme_btn.setText("☀️ Modo Claro")
         else:
-            self.theme_btn.setText("🌙 Dark Mode")
+            self.theme_btn.setText("🌙 Modo Oscuro")
         
         # Reapply styles
         self.apply_styles()
@@ -794,10 +807,10 @@ class MainWindow(QMainWindow):
         self.activity_count_label.setText(f"{count} {'activity' if count == 1 else 'activities'}")
         
         total_time = self.report.calculate_total_activity_hours()
-        self.total_time_label.setText(f"Total Activity Time: {total_time}")
+        self.total_time_label.setText(f"Tiempo Total de Actividades: {total_time}")
         
         total_images = self.report.get_total_images_count()
-        self.total_images_label.setText(f"Total Images: {total_images}")
+        self.total_images_label.setText(f"Total de Imágenes: {total_images}")
     
     def preview_pdf(self):
         """Preview PDF before saving."""
@@ -818,9 +831,9 @@ class MainWindow(QMainWindow):
             
             # Map combo text to compression level
             compression_map = {
-                "Low": CompressionLevel.LOW,
-                "Medium": CompressionLevel.MEDIUM,
-                "High": CompressionLevel.HIGH
+                "Bajo": CompressionLevel.LOW,
+                "Medio": CompressionLevel.MEDIUM,
+                "Alto": CompressionLevel.HIGH
             }
             compression = compression_map.get(
                 self.compression_combo.currentText(),
@@ -916,9 +929,9 @@ class MainWindow(QMainWindow):
             
             # Map combo text to compression level
             compression_map = {
-                "Low": CompressionLevel.LOW,
-                "Medium": CompressionLevel.MEDIUM,
-                "High": CompressionLevel.HIGH
+                "Bajo": CompressionLevel.LOW,
+                "Medio": CompressionLevel.MEDIUM,
+                "Alto": CompressionLevel.HIGH
             }
             compression = compression_map.get(
                 self.compression_combo.currentText(),

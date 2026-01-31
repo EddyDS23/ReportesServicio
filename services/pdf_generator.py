@@ -42,24 +42,25 @@ class PDFGenerator:
     """
     
     # Image settings by compression level
+    # Optimized for VERY small file sizes (<100KB requirement)
     COMPRESSION_SETTINGS = {
         CompressionLevel.LOW: {
-            'max_width': 800,
-            'max_height': 600,
-            'quality': 95,
-            'dpi': 150
+            'max_width': 350,      # ~80-100KB con 3-4 imágenes
+            'max_height': 260,     
+            'quality': 65,         # Balance calidad/tamaño
+            'dpi': 72              
         },
         CompressionLevel.MEDIUM: {
-            'max_width': 600,
-            'max_height': 450,
-            'quality': 85,
-            'dpi': 100
+            'max_width': 250,      # ~40-60KB con 3-4 imágenes (TARGET)
+            'max_height': 190,     
+            'quality': 50,         # Compresión agresiva
+            'dpi': 72              
         },
         CompressionLevel.HIGH: {
-            'max_width': 400,
-            'max_height': 300,
-            'quality': 75,
-            'dpi': 72
+            'max_width': 180,      # ~20-30KB con 3-4 imágenes (MÍNIMO)
+            'max_height': 135,     
+            'quality': 40,         # Máxima compresión
+            'dpi': 72              
         }
     }
     
@@ -304,35 +305,32 @@ class PDFGenerator:
         
         return elements
     
-    def _create_general_info_table(self) -> Table:
-        """Create the general information table."""
-        data = [
-            ['Responsible:', self.report.responsible],
-            ['Student:', self.report.student],
-            ['Date:', self.report.date.strftime('%B %d, %Y')],
-            ['Entry Time:', self.report.entry_time],
-            ['Exit Time:', self.report.exit_time],
-            ['Instance Hours:', self.report.instance_hours],
-        ]
+    def _create_general_info_simple(self) -> List:
+        """Create simple general information without table."""
+        elements = []
         
-        table = Table(data, colWidths=[2 * inch, 4 * inch])
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F3F4F6')),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#374151')),
-            ('TEXTCOLOR', (1, 0), (1, -1), colors.HexColor('#111827')),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 11),
-            ('PADDING', (0, 0), (-1, -1), 8),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
-        ]))
+        # Estilo simple para info
+        info_style = ParagraphStyle(
+            'SimpleInfo',
+            parent=self.styles['CustomBody'],
+            fontSize=11,
+            textColor=colors.HexColor('#374151'),
+            spaceAfter=6,
+            leftIndent=0,
+        )
         
-        return table
+        elements.append(Paragraph(f"<b>Responsable:</b> {self.report.responsible}", info_style))
+        elements.append(Paragraph(f"<b>Alumnno:</b> {self.report.student}", info_style))
+        elements.append(Paragraph(f"<b>Fecha:</b> {self.report.date.strftime('%B %d, %Y')}", info_style))
+        elements.append(Paragraph(f"<b>Hora Entrada:</b> {self.report.entry_time}", info_style))
+        elements.append(Paragraph(f"<b>Hora Salida:</b> {self.report.exit_time}", info_style))
+        elements.append(Paragraph(f"<b>Horas Instancia:</b> {self.report.instance_hours}", info_style))
+        
+        return elements
     
     def _create_activity_section(self, activity: Activity, activity_num: int) -> List:
         """
-        Create PDF elements for a single activity.
+        Create PDF elements for a single activity - Minimalist version.
         
         Args:
             activity: Activity object
@@ -343,30 +341,20 @@ class PDFGenerator:
         """
         elements = []
         
-        # Activity header box
+        # Activity header
         activity_title = Paragraph(
-            f"<b>Activity {activity_num}: {activity.title}</b>",
+            f"<b>Actividad {activity_num}: {activity.title}</b>",
             self.styles['ActivityTitle']
         )
         elements.append(activity_title)
         
-        # Activity details table
-        details_data = [
-            ['Time:', f"{activity.start_time} - {activity.end_time}"],
-            ['Duration:', activity.duration],
-        ]
-        
-        details_table = Table(details_data, colWidths=[1.2 * inch, 2.5 * inch])
-        details_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#374151')),
-            ('PADDING', (0, 0), (-1, -1), 4),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ]))
-        elements.append(details_table)
-        elements.append(Spacer(1, 0.1 * inch))
+        # Time and duration in one line
+        time_info = Paragraph(
+            f"⏰ <b>{activity.start_time} - {activity.end_time}</b> ({activity.duration})",
+            self.styles['CustomBody']
+        )
+        elements.append(time_info)
+        elements.append(Spacer(1, 0.05 * inch))
         
         # Description
         desc_title = Paragraph("<b>Description:</b>", self.styles['CustomBody'])
@@ -374,7 +362,7 @@ class PDFGenerator:
         
         description = Paragraph(activity.description, self.styles['CustomBody'])
         elements.append(description)
-        elements.append(Spacer(1, 0.15 * inch))
+        elements.append(Spacer(1, 0.1 * inch))
         
         # Images (if any)
         if activity.images:
@@ -383,44 +371,44 @@ class PDFGenerator:
                 self.styles['CustomBody']
             )
             elements.append(img_title)
-            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Spacer(1, 0.05 * inch))
             
             # Create image grid
             available_width = self.width - (2 * self.margin)
             image_grid = self._create_image_grid(activity.images, available_width)
             elements.extend(image_grid)
         
-        # Separator
-        elements.append(Spacer(1, 0.1 * inch))
+        # Small space after activity (no separator)
+        elements.append(Spacer(1, 0.15 * inch))
         
-        # Activity box border
-        return [KeepTogether(elements)]
+        return elements
     
     def _create_signature_section(self) -> List:
-        """Create signature fields."""
+        """Create signature fields - Minimalist version."""
         elements = []
         
-        elements.append(Spacer(1, 0.5 * inch))
+        elements.append(Spacer(1, 0.6 * inch))
         
-        # Signature table
-        sig_data = [
-            ['_' * 30, '_' * 30],
-            ['Responsible Signature', 'Student Signature'],
-            ['Date: _______________', 'Date: _______________'],
-        ]
+        # Signature lines simple
+        sig_style = ParagraphStyle(
+            'Signature',
+            parent=self.styles['CustomBody'],
+            fontSize=10,
+            textColor=colors.HexColor('#374151'),
+            spaceAfter=8,
+        )
         
-        sig_table = Table(sig_data, colWidths=[3 * inch, 3 * inch])
-        sig_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
-            ('FONTNAME', (0, 2), (-1, 2), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#374151')),
-            ('TOPPADDING', (0, 0), (-1, 0), 20),
-            ('BOTTOMPADDING', (0, 1), (-1, 1), 5),
-        ]))
+        # Responsible signature
+        elements.append(Paragraph("_" * 60, sig_style))
+        elements.append(Paragraph("<b>Responsible Signature</b>", sig_style))
+        elements.append(Paragraph("Date: _______________", sig_style))
         
-        elements.append(sig_table)
+        elements.append(Spacer(1, 0.4 * inch))
+        
+        # Student signature
+        elements.append(Paragraph("_" * 60, sig_style))
+        elements.append(Paragraph("<b>Student Signature</b>", sig_style))
+        elements.append(Paragraph("Date: _______________", sig_style))
         
         return elements
     
@@ -455,7 +443,7 @@ class PDFGenerator:
             
             # Title
             title = Paragraph(
-                "Daily Activity Report",
+                "Reporte Diario",
                 self.styles['CustomTitle']
             )
             story.append(title)
@@ -470,20 +458,22 @@ class PDFGenerator:
             
             # General Information section
             section_header = Paragraph(
-                "General Information",
+                "Informacion general",
                 self.styles['SectionHeader']
             )
             story.append(section_header)
-            story.append(self._create_general_info_table())
-            story.append(Spacer(1, 0.4 * inch))
+            story.append(Spacer(1, 0.1 * inch))
+            general_info_elements = self._create_general_info_simple()
+            story.extend(general_info_elements)
+            story.append(Spacer(1, 0.25 * inch))
             
             # Activities section
             activities_header = Paragraph(
-                f"Activities ({self.report.get_activity_count()})",
+                f"Actividades ({self.report.get_activity_count()})",
                 self.styles['SectionHeader']
             )
             story.append(activities_header)
-            story.append(Spacer(1, 0.2 * inch))
+            story.append(Spacer(1, 0.15 * inch))
             
             # Add each activity
             for i in range(self.report.get_activity_count()):
@@ -491,35 +481,7 @@ class PDFGenerator:
                 if activity:
                     activity_elements = self._create_activity_section(activity, i + 1)
                     story.extend(activity_elements)
-                    
-                    # Add spacer between activities
-                    if i < self.report.get_activity_count() - 1:
-                        story.append(Spacer(1, 0.3 * inch))
             
-            # Summary section
-            story.append(Spacer(1, 0.3 * inch))
-            summary_header = Paragraph(
-                "Summary",
-                self.styles['SectionHeader']
-            )
-            story.append(summary_header)
-            
-            stats = self.report.get_statistics()
-            summary_data = [
-                ['Total Activities:', str(stats['total_activities'])],
-                ['Total Activity Time:', stats['total_activity_hours']],
-                ['Total Images:', str(stats['total_images'])],
-            ]
-            
-            summary_table = Table(summary_data, colWidths=[2 * inch, 2 * inch])
-            summary_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 11),
-                ('PADDING', (0, 0), (-1, -1), 6),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ]))
-            story.append(summary_table)
             
             # Signature section (optional)
             if self.include_signatures:
